@@ -4,17 +4,12 @@ import java.math.BigInteger
 
 import scalikejdbc._
 
-//TODO make an abstraction layer for this stuff
-object PersonRelLocation {
+object PersonRelLocation
+  extends DBOperator[(BigInteger, BigInteger)] with Countable[(BigInteger, BigInteger)] with Creatable.Simple[(BigInteger, BigInteger)] {
   val field = sqls"person_rel_location"
-
-  def create(person: BigInteger, location: BigInteger): Int = DB localTx { implicit session =>
-    sql"INSERT INTO $field (person, location) VALUES (${person.longValueExact},${location.longValueExact})".update().apply()
-  }
-
-  def count: Option[Int] = DB readOnly { implicit session =>
-    sql"SELECT COUNT(*) FROM $field".map(_.int("count")).single().apply()
-  }
+  val valuenames = sqls"person, location"
+  def values(personLocation: (BigInteger, BigInteger)) =
+    sqls"${personLocation._1.longValueExact},${personLocation._2.longValueExact}"
 
 }
 

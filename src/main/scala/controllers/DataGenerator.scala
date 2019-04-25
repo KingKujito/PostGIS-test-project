@@ -2,6 +2,7 @@ package controllers
 import models._
 import scalikejdbc._
 import java.math.BigInteger
+import java.sql.Time
 
 import scala.util.Random
 
@@ -19,7 +20,6 @@ object DataGenerator {
     //logic for data creation
     val remaining = desiredEntries - Person.count.getOrElse(0)
     val locations = desiredEntries - Location.count.getOrElse(0)
-    val relations = desiredEntries - PersonRelLocation.count.getOrElse(0)
 
     randomPeople(remaining)
       .foreach(Person.create)
@@ -37,9 +37,20 @@ object DataGenerator {
     val l = Location.count.getOrElse(0)
     val r = PersonRelLocation.count.getOrElse(0)
     require(
-      remaining == locations && remaining == relations,
+      p == desiredEntries && p == l && p == r,
       s"The tables are out of sync... p=$p,l=$l,prl=$r...\nDeleting all tables and data...${utils.cleanupTable; ""} Please retry..."
     )
+
+    //logic for data creation
+    val facilities = desiredEntries - Facility.count.getOrElse(0)
+    randomFacilities(facilities)
+      .foreach(Facility.create)
+
+    Facility.getAll.foreach { f =>
+      Teetime.create(Teetime(randomTime, f.id.get))
+      Teetime.create(Teetime(randomTime, f.id.get))
+      Teetime.create(Teetime(randomTime, f.id.get))
+    }
   }
 
   def generateRandomFloat  : Float   = Random.nextFloat()
@@ -52,7 +63,26 @@ object DataGenerator {
     (for (i <- 0 until amount) yield Person(names(i))).toList
   }
 
-  def randomLocations(amount: Int) : List[Location] =
-    (for (_ <- 0 until  amount) yield Location(generateRandomFloat*360-180, generateRandomFloat*180-90)).toList
+  /**
+    * Scrape the web for random fake street names and create facilities out of them
+    */
+  def randomFacilities(amount: Int) : List[Facility] = {
+    val names = DataScraper.scrape(amount, DataScraper.streetpath)
+    (for (i <- 0 until amount) yield new Facility(names(i), randomLocation)).toList
+  }
 
+  def randomLocations(amount: Int) : List[Location] =
+    (for (_ <- 0 until  amount) yield randomLocation).toList
+
+  def randomLocation: Location = Location(generateRandomFloat*360-180, generateRandomFloat*180-90)
+
+  def randomInt(min: Int, max: Int): Int = (generateRandomFloat*(max+min)-min).toInt
+
+  //noinspection ScalaDeprecation
+  def randomTime: Time = {
+    new Time(
+      randomInt(0,23),
+      randomInt(0,59),
+      randomInt(0,59))
+  }
 }

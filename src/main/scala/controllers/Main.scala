@@ -1,10 +1,11 @@
 package controllers
 
 import models._
-import scalikejdbc._
 import utils._
 
 object Main extends App {
+  //Select which extension you'd like to use.
+  val extension : Extension = Earthdistance
 
   override def main(args: Array[String]): Unit = {
 
@@ -18,13 +19,14 @@ object Main extends App {
       //setup our data
       DataGenerator.populateDb()
       //check if everything went well
-      require(Person   .count.contains(DataGenerator.desiredEntries) &&
-              Location .count.contains(DataGenerator.desiredEntries),
+      require(Person              .count.contains(DataGenerator.desiredEntries) &&
+              PersonRelLocation   .count.contains(DataGenerator.desiredEntries) &&
+              Location            .count.contains(DataGenerator.desiredEntries),
               "Your actual data does not seem to comply with the desired data. Please check your db and/or the code"
       )
 
       //then do this or whatever you want...
-      println(Person.getAll)
+      getNearMiddle(5000).foreach(println)
     }
 
     println(s"${Console.BLUE}--------\nEND${Console.RESET}")
@@ -32,11 +34,5 @@ object Main extends App {
   }
 
   //just a little function I used to test postgres
-  //TODO remove this
-  def testing = {
-    DB readOnly { implicit session =>
-      sql"SELECT (point(0, 0) <@> point(20, 20)) * 1.60934 as dist_in_km".map(_.long("dist_in_km")).single.apply()
-    }
-  }
 
 }

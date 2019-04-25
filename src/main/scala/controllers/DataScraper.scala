@@ -9,13 +9,18 @@ import org.openqa.selenium.safari.SafariDriver
   */
 object DataScraper {
   val driver     : WebDriver                = new SafariDriver()
-  val path                                  = "https://www.name-generator.org.uk/quick/"
-  def init(): Unit = driver.get(path)
+  val namepath                              = "https://www.name-generator.org.uk/quick/"
+  val streetpath                            = "https://www.name-generator.org.uk/?i=2ilmuw1c"
+  def init(path : String): Unit = driver.get(path)
 
-  def scrape(amount: Int): List[String] = {
+  def scrape(amount: Int, path : String = namepath): List[String] = {
     (for(_ <- 0 until(amount/10)) yield {
-      init()
-      get10Names
+      init(path)
+      path match {
+        case `streetpath` => get10Streets
+        case `namepath`   => get10Names
+        case _            => List.empty[String]
+      }
     }).toList.flatten
   }
 
@@ -24,6 +29,14 @@ object DataScraper {
     nameElems.toArray.toList.map {
       case e: WebElement =>
         e.getAttribute("innerHTML")
+    }
+  }
+
+  def get10Streets: List[String] = {
+    val nameElems = driver.findElements(By.className("name"))
+    nameElems.toArray.toList.map {
+      case e: WebElement =>
+        e.getAttribute("innerHTML").split(". ").reverse.head
     }
   }
 }
