@@ -36,7 +36,7 @@ object DataScraper {
     val nameElems = driver.findElements(By.className("name"))
     nameElems.toArray.toList.map {
       case e: WebElement =>
-        e.getAttribute("innerHTML").split(". ").reverse.head
+        e.getAttribute("innerHTML").split("\\. ").reverse.head
     }
   }
 }
