@@ -4,10 +4,10 @@ import java.math.BigInteger
 
 import scalikejdbc._
 
-case class Facility(name: String, longitude: BigDecimal, latitude: BigDecimal,
+case class Facility(name: String, latitude: BigDecimal, longitude: BigDecimal,
                     override val id : Option[BigInteger] = None) extends WithId {
   //constructor
-  def this(name: String, location: Location) = this(name, location.long, location.lat)
+  def this(name: String, location: Location) = this(name, location.lat, location.long)
 }
 
 object Facility extends DBOperator[Facility] with StandardGetters[Facility] with Creatable[Facility] {

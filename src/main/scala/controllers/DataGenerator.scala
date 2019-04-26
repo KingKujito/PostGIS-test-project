@@ -74,7 +74,7 @@ object DataGenerator {
   def randomLocations(amount: Int) : List[Location] =
     (for (_ <- 0 until  amount) yield randomLocation).toList
 
-  def randomLocation: Location = Location(generateRandomFloat*180-90, generateRandomFloat*360-180)
+  def randomLocation: Location = Location(generateRandomFloat*360-180, generateRandomFloat*180-90)
 
   def randomInt(min: Int, max: Int): Int = (generateRandomFloat*(max+min)-min).toInt
 

@@ -60,15 +60,22 @@ SELECT
 
 /*
 SELECT *, ST_Distance('SRID=4326;POINT(0 0)'::geography,
-					  'SRID=4326;POINT('||facility.longtitude||' '||facility.latitude||')'::geography)/1000 AS dist_in_km
+					  ('SRID=4326;POINT('||facility.longitude||' '||facility.latitude||')')::geography)/1000 AS dist_in_km
 	FROM facility
     WHERE ST_DWithin('SRID=4326;POINT(0 0)'::geography,
-					  'SRID=4326;POINT('||facility.longtitude||' '||facility.latitude||')'::geography,
+					  ('SRID=4326;POINT('||facility.longitude||' '||facility.latitude||')')::geography,
 					 5000*1000)
     ORDER BY dist_in_km;*/
-	--does not work
+	--works
 	
-SELECT *, ((point(0,0) <@> point(facility.longtitude,facility.latitude))*1.60934) AS dist_in_km
+/*
+SELECT *, ((point(0,0) <@> point(facility.longitude,facility.latitude))*1.60934) AS dist_in_km
 	FROM facility, teetime
-    WHERE ((point(0,0) <@> point(facility.longtitude,facility.latitude))*1.60934) < 5000 AND teetime.facility = facility.id
-    ORDER BY dist_in_km;
+    WHERE ((point(0,0) <@> point(facility.longitude,facility.latitude))*1.60934) < 5000 AND teetime.facility = facility.id
+    ORDER BY dist_in_km;*/
+	--works
+	
+/*	SELECT *, ((point(0,0) <@> point(facility.longitude,facility.latitude))*1.60934) AS dist_in_km
+	FROM facility, teetime
+    WHERE teetime.facility = facility.id
+    ORDER BY dist_in_km;*/
