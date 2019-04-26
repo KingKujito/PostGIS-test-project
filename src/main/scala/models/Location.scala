@@ -9,7 +9,7 @@ case class Location (
                       lat:  Float,
                       override val id : Option[BigInteger] = None
                     ) extends WithId {
-  lazy val geog = s"SRID=4326;POINT($long $lat)"
+  lazy val geog = s"SRID=4326;POINT($lat $long)"
 }
 
 object Location extends DBOperator[Location] with Countable[Location] with Creatable[Location] {

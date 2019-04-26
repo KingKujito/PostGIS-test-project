@@ -25,7 +25,7 @@ package object utils {
 
      CREATE TABLE IF NOT EXISTS facility (
               name character varying(50) COLLATE pg_catalog."default" NOT NULL,
-              longtitude decimal,
+              longitude decimal,
               latitude decimal,
               id bigint NOT NULL DEFAULT nextval('facility_id_seq'::regclass),
               CONSTRAINT facility_pkey PRIMARY KEY (id)
@@ -129,40 +129,40 @@ package object utils {
     )}.list().apply()
   }
 
-  def distanceQuery(long: Float, lat: Float,
+  def distanceQuery(lat: Float, long: Float,
                     table: SQLSyntax = sqls"location", extension: Extension = defaultExtension): SQLSyntax = extension match {
-    case PostGIS         => sqls"ST_Distance('SRID=4326;POINT($long $lat)'::geography, $table.geog)/1000"
-    case Earthdistance   => sqls"((point($long, $lat) <@> $table.longlat)*1.60934)"}
+    case PostGIS         => sqls"ST_Distance('SRID=4326;POINT($lat $long)'::geography, $table.geog)/1000"
+    case Earthdistance   => sqls"((point($lat, $long) <@> $table.longlat)*1.60934)"}
 
-  def withinQuery(long: Float, lat: Float, radius: Int,
+  def withinQuery(lat: Float, long: Float, radius: Int,
                   table: SQLSyntax = sqls"location", extension: Extension = defaultExtension): SQLSyntax = extension match {
-    case PostGIS         => sqls"ST_DWithin('SRID=4326;POINT($long $lat)'::geography, $table.geog, $radius*1000)"
-    case Earthdistance   => sqls"((point($long, $lat) <@> $table.longlat)*1.60934) < $radius"}
+    case PostGIS         => sqls"ST_DWithin('SRID=4326;POINT($lat $long)'::geography, $table.geog, $radius*1000)"
+    case Earthdistance   => sqls"((point($lat, $long) <@> $table.longlat)*1.60934) < $radius"}
 
 
   /**
     * Gets facilities, teetimes and distances within radius from (long, lat).
     * @param radius in kilometers
     */
-  def getTeetimesWithinRadius(long: Float, lat: Float, radius: Int, limit: Int = 20, extension: Extension = defaultExtension)
+  def getTeetimesWithinRadius(lat: Float, long: Float, radius: Int, limit: Int = 20, extension: Extension = defaultExtension)
   : List[(Facility, Teetime, Float)] = DB readOnly { implicit session =>
-    sql"""SELECT *, ${distanceQuery2(long, lat,  extension=extension)} AS dist_in_km
+    sql"""SELECT *, ${distanceQuery2(lat, long,  extension=extension)} AS dist_in_km
     FROM facility, teetime
-    WHERE ${withinQuery2(long, lat, 5000, extension=extension)} AND teetime.facility = facility.id
+    WHERE ${withinQuery2(lat, long, 5000, extension=extension)} AND teetime.facility = facility.id
     ORDER BY dist_in_km LIMIT $limit""".map{rs =>
       (Facility.apply(rs), Teetime.apply(rs), rs.float("dist_in_km"))
     }.list().apply()
   }
 
-  def distanceQuery2(long: Float, lat: Float,
+  def distanceQuery2(lat: Float, long: Float,
                     table: SQLSyntax = sqls"facility", extension: Extension = defaultExtension): SQLSyntax = extension match {
     case PostGIS         =>
-      sqls"ST_Distance('SRID=4326;POINT($long $lat)'::geography, ('SRID=4326;POINT('||$table.longtitude||' '||$table.latitude||')')::geography)/1000"
-    case Earthdistance   => sqls"((point($long,$lat) <@> point($table.longtitude,$table.latitude))*1.60934)"}
+      sqls"ST_Distance('SRID=4326;POINT($lat $long)'::geography, ('SRID=4326;POINT('||$table.latitude||' '||$table.longitude||')')::geography)/1000"
+    case Earthdistance   => sqls"((point($lat,$long) <@> point($table.longitude,$table.latitude))*1.60934)"}
 
-  def withinQuery2(long: Float, lat: Float, radius: Int,
+  def withinQuery2(lat: Float, long: Float, radius: Int,
                   table: SQLSyntax = sqls"facility", extension: Extension = defaultExtension): SQLSyntax = extension match {
     case PostGIS         =>
-      sqls"ST_DWithin('SRID=4326;POINT($long $lat)'::geography, ('SRID=4326;POINT('||$table.longtitude||' '||$table.latitude||')')::geography, $radius*1000)"
-    case Earthdistance   => sqls"((point($long,$lat) <@> point($table.longtitude,$table.latitude))*1.60934) < $radius"}
+      sqls"ST_DWithin('SRID=4326;POINT($lat $long)'::geography, ('SRID=4326;POINT('||$table.latitude||' '||$table.longitude||')')::geography, $radius*1000)"
+    case Earthdistance   => sqls"((point($lat,$long) <@> point($table.longitude,$table.latitude))*1.60934) < $radius"}
 }

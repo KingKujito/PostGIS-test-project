@@ -6,9 +6,11 @@ import utils._
 object Main extends App {
   //Select which extension you'd like to use.
   val extension : Extension = Earthdistance
+  lazy val myCoordinates = DataScraper.getMyLocation
 
   override def main(args: Array[String]): Unit = {
 
+    println(s"${Console.YELLOW}Note that a slow browser could cause this program to fail.${Console.RESET}")
     println(s"${Console.BLUE}START\n--------${Console.RESET}")
 
     withConnection{ _ =>
@@ -33,6 +35,5 @@ object Main extends App {
 
   }
 
-  //just a little function I used to test postgres
 
 }
