@@ -17,6 +17,7 @@ As of right now this application creates a schema and populates the tables. Afte
 ### Instructions
 - make sure you meet all requirements mentioned above
 - alter the code to test whatever you want
+- set Main.generateData to false if you don't want your data to be replaced
 - sbt run
 
 congrats! Your schema should now look as follows:

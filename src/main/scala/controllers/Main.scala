@@ -6,7 +6,7 @@ import utils._
 object Main extends App {
   //Select which extension you'd like to use.
   val extension : Extension = Earthdistance
-  val generateData = false
+  val generateData = true
   lazy val myCoordinates = DataScraper.getMyLocation
 
   override def main(args: Array[String]): Unit = {
