@@ -8,9 +8,17 @@ import org.openqa.selenium.safari.SafariDriver
   * and to have 'allow for remote automation' turned on.
   */
 object DataScraper {
-  val driver     : WebDriver                = new SafariDriver()
+  val driver          : WebDriver           = new SafariDriver()
   val namepath                              = "https://www.name-generator.org.uk/quick/"
-  val streetpath                            = "https://www.name-generator.org.uk/?i=2ilmuw1c"
+  //makes sure we get a fresh session (urls expire)
+  val streetpath : String              = {
+    driver.get("https://www.name-generator.org.uk/street/")
+    driver.findElement(By.xpath("//*[@id=\"main\"]/div/form/input[15]")).click()
+    Thread.sleep(5000)
+    println(driver.getCurrentUrl)
+    driver.getCurrentUrl
+  }
+
   def init(path : String): Unit = driver.get(path)
 
   def scrape(amount: Int, path : String = namepath): List[String] = {
