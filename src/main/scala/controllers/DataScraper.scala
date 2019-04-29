@@ -16,8 +16,9 @@ object DataScraper {
   val driver          : WebDriver           = new SafariDriver()
   val namepath                              = "https://www.name-generator.org.uk/quick/"
   //makes sure we get a fresh session (urls expire)
-  val streetpath : String              = {
+  lazy val streetpath : String              = {
     driver.get("https://www.name-generator.org.uk/street/")
+    driver.findElement(By.xpath("//*[@id=\"main\"]/div/form/input[4]")).sendKeys("100")
     driver.findElement(By.xpath("//*[@id=\"main\"]/div/form/input[15]")).click()
     Thread.sleep(2000)
     driver.getCurrentUrl
@@ -27,17 +28,24 @@ object DataScraper {
   def init(path : String): Unit = driver.get(path)
 
   def scrape(amount: Int, path : String = namepath): List[String] = {
-    (for(_ <- 0 until(amount/10)) yield {
-      init(path)
-      path match {
-        case `streetpath` => get10Streets
-        case `namepath`   => get10Names
-        case _            => List.empty[String]
-      }
-    }).toList.flatten
+    println("Scraping data..")
+    path match {
+      case `namepath`   =>
+        if(amount > 1000)
+          (for(i <- 0 until amount) yield s"person $i").toList
+        else
+          (for(_ <- 0 until(amount/10)) yield get10Names).toList.flatten //this took 52 minutes to run for amount = 50000
+      case `streetpath` =>
+        if(amount > 1000)
+          (for(i <- 0 until amount) yield s"facility $i").toList
+        else
+          (for(_ <- 0 until math.ceil(amount/100).toInt) yield get10Streets).toList.flatten //this took 30 minutes to run for amount = 50000 and was stopped due to url expiration
+      case _            => List.empty[String]
+    }
   }
 
   def get10Names: List[String] = {
+    init(namepath)
     val nameElems = driver.findElements(By.className("name_heading"))
     nameElems.toArray.toList.map {
       case e: WebElement =>
@@ -46,6 +54,7 @@ object DataScraper {
   }
 
   def get10Streets: List[String] = {
+    init(streetpath)
     val nameElems = driver.findElements(By.className("name"))
     nameElems.toArray.toList.map {
       case e: WebElement =>

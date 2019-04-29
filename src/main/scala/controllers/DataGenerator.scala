@@ -11,7 +11,7 @@ import scala.util.Random
   */
 object DataGenerator {
   //The amount of rows we want our db to contain
-  val desiredEntries = 50
+  val desiredEntries = 500000
 
   /**
     * Put data for random people and random locations in the db, then randomly assign relations between them.

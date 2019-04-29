@@ -6,7 +6,7 @@ import utils._
 object Main extends App {
   //Select which extension you'd like to use.
   val extension : Extension = Earthdistance
-  val generateData = true
+  //val generateData = false
   lazy val myCoordinates = DataScraper.getMyLocation
 
   override def main(args: Array[String]): Unit = {
@@ -15,7 +15,8 @@ object Main extends App {
     println(s"${Console.BLUE}START\n--------${Console.RESET}")
 
     withConnection{ _ =>
-      if(generateData) {
+      //if(generateData) {
+        println(s"${Console.GREEN}Generating clean data...${Console.RESET}")
         //make sure we're working in a clean environment
         cleanupTable
         //setup our schema
@@ -29,13 +30,14 @@ object Main extends App {
           Location            .count.contains(DataGenerator.desiredEntries),
           "Your actual data does not seem to comply with the desired data. Please check your db and/or the code"
         )
-      }
+     //}
       //then do this or whatever you want...
-      getTeetimesWithinRadius(
+      /*getTeetimesWithinRadius(
         myCoordinates.head,
         myCoordinates.reverse.head,
         750
-      ).foreach(println)
+      ).foreach(println)*/
+      benchmark()
     }
 
     println(s"${Console.BLUE}--------\nEND${Console.RESET}")

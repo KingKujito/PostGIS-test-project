@@ -1,3 +1,4 @@
+import controllers.DataGenerator
 import models._
 import scalikejdbc.config.DBs
 import scalikejdbc._
@@ -131,12 +132,12 @@ package object utils {
 
   def distanceQuery(lat: Float, long: Float,
                     table: SQLSyntax = sqls"location", extension: Extension = defaultExtension): SQLSyntax = extension match {
-    case PostGIS         => sqls"ST_Distance('SRID=4326;POINT($lat $long)'::geography, $table.geog)/1000"
+    case PostGIS         => sqls"ST_Distance(('SRID=4326;POINT('||$lat||' '||$long||')')::geography, $table.geog)/1000"
     case Earthdistance   => sqls"((point($lat, $long) <@> $table.longlat)*1.60934)"}
 
   def withinQuery(lat: Float, long: Float, radius: Int,
                   table: SQLSyntax = sqls"location", extension: Extension = defaultExtension): SQLSyntax = extension match {
-    case PostGIS         => sqls"ST_DWithin('SRID=4326;POINT($lat $long)'::geography, $table.geog, $radius*1000)"
+    case PostGIS         => sqls"ST_DWithin(('SRID=4326;POINT('||$lat||' '||$long||')')::geography, $table.geog, $radius*1000)"
     case Earthdistance   => sqls"((point($lat, $long) <@> $table.longlat)*1.60934) < $radius"}
 
 
@@ -157,12 +158,52 @@ package object utils {
   def distanceQuery2(lat: Float, long: Float,
                     table: SQLSyntax = sqls"facility", extension: Extension = defaultExtension): SQLSyntax = extension match {
     case PostGIS         =>
-      sqls"ST_Distance('SRID=4326;POINT($lat $long)'::geography, ('SRID=4326;POINT('||$table.latitude||' '||$table.longitude||')')::geography)/1000"
+      sqls"ST_Distance(('SRID=4326;POINT('||$lat||' '||$long||')')::geography, ('SRID=4326;POINT('||$table.latitude||' '||$table.longitude||')')::geography)/1000"
     case Earthdistance   => sqls"((point($lat,$long) <@> point($table.latitude, $table.longitude))*1.60934)"}
 
   def withinQuery2(lat: Float, long: Float, radius: Int,
                   table: SQLSyntax = sqls"facility", extension: Extension = defaultExtension): SQLSyntax = extension match {
     case PostGIS         =>
-      sqls"ST_DWithin('SRID=4326;POINT($lat $long)'::geography, ('SRID=4326;POINT('||$table.latitude||' '||$table.longitude||')')::geography, $radius*1000)"
+      sqls"ST_DWithin(('SRID=4326;POINT('||$lat||' '||$long||')')::geography, ('SRID=4326;POINT('||$table.latitude||' '||$table.longitude||')')::geography, $radius*1000)"
     case Earthdistance   => sqls"((point($lat,$long) <@> point($table.latitude, $table.longitude))*1.60934) < $radius"}
+
+
+
+  /**
+    * Gets facilities, teetimes and distances within radius from (long, lat).
+    * @param radius in kilometers
+    */
+  def benchmarker(lat: Float, long: Float, radius: Int, extension: Extension = defaultExtension)
+  : String = DB readOnly { implicit session =>
+    sql"""
+         EXPLAIN ANALYZE
+    SELECT ${distanceQuery2(lat, long,  extension=extension)} AS dist_in_km
+    FROM facility
+    WHERE ${withinQuery2(lat, long, radius, extension=extension)}
+    ORDER BY dist_in_km""".map{rs =>
+      rs.string("QUERY PLAN")
+    }.list().apply().apply(6) //change to apply(11) for many rows
+  }
+
+  def benchmark (benchTries : Int = 25): Unit = {
+    val benchE = for(_ <- 1 to benchTries) yield benchmarker(0,0,30000, extension = Earthdistance)
+    val benchP = for(_ <- 1 to benchTries) yield benchmarker(0,0,30000, extension = PostGIS)
+
+    println(s"${Console.BLUE}For ${DataGenerator.desiredEntries} rows\n------")
+    println(s"${Console.GREEN}Earthdistance performance${Console.RESET}")
+    benchE.foreach(println)
+
+    println(s"${Console.GREEN}Average: ${average(
+      benchE.map(_.replaceAll("[a-zA-z: ]", "").toFloat).toList
+    )}${Console.RESET} ms\n")
+
+    println(s"${Console.GREEN}PostGIS performance${Console.RESET}")
+    benchP.foreach(println)
+
+    println(s"${Console.GREEN}Average: ${average(
+      benchP.map(_.replaceAll("[a-zA-z: ]", "").toFloat).toList
+    )}${Console.RESET} ms\n")
+  }
+
+  def average (list : List[Float]): Float = list.sum / list.length
 }
